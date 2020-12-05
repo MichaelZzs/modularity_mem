@@ -1,27 +1,12 @@
 import brain_graphs
 import scipy.io as sio
 import numpy as np
-import pandas as pd
-from datetime import date
-import itertools
-import seaborn as sns
 from scipy import stats
-from sklearn.model_selection import cross_val_score
-from sklearn.model_selection import train_test_split
-from sklearn.model_selection import KFold
-from sklearn.svm import SVR
+from scipy.stats.stats import pearsonr
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
-from sklearn import linear_model
-import os
-import matplotlib.pyplot as plt
-from sklearn.svm import LinearSVR
-from scipy.stats.stats import pearsonr
 from sklearn.neural_network import MLPRegressor
-from matplotlib.pyplot import text
-import shutil
 from sklearn.linear_model import LinearRegression
-import sys
 
 
 def individual_graph_analyes_wc(variables):
@@ -94,9 +79,6 @@ def super_edge_predict_new(v, p_thresh, features, cv="False"):
     fit_mask = np.ones((subject_pcs.shape[0])).astype(bool)
     fit_mask[t] = False
 
-    """
-    Feature selection on pc/wmd
-    """
     thresh_pcs = []
     thresh_wmds = []
 
@@ -109,7 +91,6 @@ def super_edge_predict_new(v, p_thresh, features, cv="False"):
     thresh_pcs = np.array(thresh_pcs)
     thresh_wmds = np.array(thresh_wmds)
 
-    # redefining subject pcs and wmds
     if cv == "True":
         idx = (thresh_pcs[:, 1] < p_thresh) & (thresh_wmds[:, 1] < p_thresh)
         pc_idx = idx
@@ -121,7 +102,6 @@ def super_edge_predict_new(v, p_thresh, features, cv="False"):
     subject_pcs = subject_pcs[:, pc_idx]
     subject_wmds = subject_wmds[:, wmd_idx]
 
-    # return nans if there are too few features
     if len(subject_pcs[1]) < 3 or len(subject_wmds[1]) < 3:
         return 0, np.nan, np.nan, np.nan, np.nan
 
@@ -132,9 +112,6 @@ def super_edge_predict_new(v, p_thresh, features, cv="False"):
             flat_matrices[s] = m[np.tril_indices(368, -1)]
         perf_edge_corr = generate_correlation_map(task_perf[fit_mask].reshape(1, -1), flat_matrices[fit_mask].transpose())[0]
 
-        '''
-        Feature selection for edge scores
-        '''
         thresh_es = []
         for i in range(flat_matrices.shape[1]):
             es = pearsonr(flat_matrices[fit_mask, i], task_perf[fit_mask])
@@ -174,7 +151,8 @@ def super_edge_predict_new(v, p_thresh, features, cv="False"):
     train = np.ones(len(pvals)).astype(bool)
     train[t] = False
     model = LinearRegression(normalize=True)
-
+    # model = MLPRegressor(solver='lbfgs',hidden_layer_sizes=neurons,alpha=1e-5,random_state=t)
+    
     reg = model.fit(pvals[train], task_perf[train])
     coef = reg.coef_
 
